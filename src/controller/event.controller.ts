@@ -6,16 +6,17 @@ import {
 } from "../middleware/error/responseHandler";
 import logger from "../utils/helpers/logger";
 import { CustomRequest } from "../middleware/auth";
-import { IPageFilter } from "src/utils/pageMeta";
+import { IPageFilter } from "../utils/pageMeta";
 import {
  getUserEvents,
  handleEventCreation,
  handleFetchEvent,
-} from "src/services/event.service";
+} from "../services/event.service";
 import {
  validateEventDetails,
  validateId,
-} from "src/utils/helpers/validators/validators";
+ validatePastSchedule,
+} from "../utils/helpers/validators/validators";
 
 // Create Event
 export const createEvent = async (
@@ -27,7 +28,7 @@ export const createEvent = async (
 
  try {
   validateEventDetails(title, description, date);
-
+  validatePastSchedule(date);
   const newEvent = await handleEventCreation({
    user: req.user?._id,
    title,
@@ -53,9 +54,7 @@ export const getAllEvents = async (
  const filters = req.query as IPageFilter;
  try {
   const events = await getUserEvents(filters, req.user!._id);
-  return sendSuccessResponse(res, "Events fetched successfully", 200, {
-   events,
-  });
+  return sendSuccessResponse(res, "Events fetched successfully", 200, events);
  } catch (error) {
   logger.error(error);
   next(error);
@@ -98,6 +97,9 @@ export const updateEventById = async (
  try {
   validateId(id, "eventId");
 
+  if (date) {
+   validatePastSchedule(date);
+  }
   const updatedEvent = await Event.findByIdAndUpdate(
    id,
    { title, description, date },

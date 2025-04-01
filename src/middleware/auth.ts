@@ -22,11 +22,11 @@ export const Auth = async (
   const user = await User.findOne({ _id: (decoded as any)._id });
 
   if (!user) {
-   throw new Error();
+   throw new Error("user not found");
   }
   req.user = user;
   next();
  } catch (error) {
-  res.status(401).send({ error: "Authentication required" });
+  res.status(401).send({ error: error.message });
  }
 };

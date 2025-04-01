@@ -1,7 +1,7 @@
 import { NextFunction, Response } from "express";
-import { getEventBookings } from "src/services/booking.service";
-import { validateId } from "src/utils/helpers/validators/validators";
-import { IPageFilter } from "src/utils/pageMeta";
+import { getEventBookings } from "../services/booking.service";
+import { validateId } from "../utils/helpers/validators/validators";
+import { IPageFilter } from "../utils/pageMeta";
 import { Artist } from "../models/artist.model";
 import { Booking } from "../models/bookings.model";
 import { Event } from "../models/event.model";
@@ -51,6 +51,7 @@ export const bookArtist = async (
    artist: artistId,
    event: eventId,
    status: "pending",
+   user: req.user!._id,
   });
 
   return sendSuccessResponse(res, "Artist booked successfully", 201, {
@@ -73,10 +74,13 @@ export const getBooking = async (
  try {
   // Fetch all bookings for the event
   validateId(id, "bookingId");
-  const booking = await Booking.findOne({ event: id })
+  const booking = await Booking.findOne({ _id: id })
    .populate("artist")
    .populate("event");
 
+  if (!booking) {
+   return sendErrorResponse(res, "Booking not found", 404);
+  }
   return sendSuccessResponse(res, "Bookings fetched successfully", 200, {
    booking,
   });
@@ -97,9 +101,12 @@ export const getAllBookings = async (
   // Fetch all bookings for the artist
   const bookings = await getEventBookings(filters, req.user!._id);
 
-  return sendSuccessResponse(res, "Bookings fetched successfully", 200, {
-   bookings,
-  });
+  return sendSuccessResponse(
+   res,
+   "Bookings fetched successfully",
+   200,
+   bookings
+  );
  } catch (error) {
   logger.error(error);
   next(error);
@@ -113,8 +120,8 @@ export const updateBooking = async (
  next: NextFunction
 ) => {
  //either artist or owner can update booking
- const { bookingId, status } = req.params;
-
+ const { bookingId } = req.params;
+ const status = req.query.status as string;
  try {
   // Find the booking by ID
   validateId(bookingId, "bookingId");
@@ -125,15 +132,20 @@ export const updateBooking = async (
    return sendErrorResponse(res, "Invalid status", 400);
   }
 
-  const booking = await Booking.findById(bookingId);
+  const booking = await Booking.findById(bookingId)
+   .populate("artist")
+   .populate("event");
 
   if (!booking) {
    return sendErrorResponse(res, "Booking not found", 404);
   }
 
+  if (booking.status === status) {
+   return sendErrorResponse(res, `Booking already ${status}`, 400);
+  }
   if (
    ["confirmed", "rejected"].includes(status) &&
-   req.user!._id.toString() !== booking.artist.toString()
+   req.user!._id.toString() !== (booking as any).artist.user.toString()
   ) {
    return sendErrorResponse(
     res,
@@ -143,7 +155,7 @@ export const updateBooking = async (
   }
   if (
    ["cancelled"].includes(status) &&
-   req.user!._id.toString() !== booking.event.toString()
+   req.user!._id.toString() !== (booking as any).event.user.toString()
   ) {
    return sendErrorResponse(
     res,
@@ -155,7 +167,7 @@ export const updateBooking = async (
   booking.status = status;
   await booking.save();
 
-  return sendSuccessResponse(res, "Booking cancelled successfully", 200, {
+  return sendSuccessResponse(res, `Booking ${status} successfully`, 200, {
    booking,
   });
  } catch (error) {

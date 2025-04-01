@@ -3,6 +3,7 @@ import mongoose, { Schema, Document } from "mongoose";
 export interface IBooking extends Document {
  artist: mongoose.Types.ObjectId;
  event: mongoose.Types.ObjectId;
+ user: mongoose.Types.ObjectId;
  status: string;
 }
 
@@ -13,6 +14,11 @@ const BookingSchema = new Schema<IBooking>(
    ref: "Artist",
    required: true,
   },
+  user: {
+   type: mongoose.Schema.Types.ObjectId,
+   ref: "User",
+   required: true,
+  },
   event: {
    type: mongoose.Schema.Types.ObjectId,
    ref: "Event",
@@ -20,7 +26,7 @@ const BookingSchema = new Schema<IBooking>(
   },
   status: {
    type: String,
-   enum: ["pending", "confirmed", "cancelled"],
+   enum: ["pending", "confirmed", "cancelled", "rejected"],
    default: "pending",
   },
  },

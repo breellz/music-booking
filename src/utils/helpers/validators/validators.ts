@@ -83,3 +83,29 @@ export const validateEventDetails = (
  }
  return true;
 };
+
+export const validateArtistProfile = (
+ stageName: string,
+ bio: string,
+ pricePerHour: number
+) => {
+ const schema = Joi.object({
+  stageName: Joi.string().required(),
+  bio: Joi.string().required(),
+  pricePerHour: Joi.number().required(),
+ });
+ const { error } = schema.validate({ stageName, bio, pricePerHour });
+ if (error) {
+  throw new ValidationError(error.details[0].message);
+ }
+ return true;
+};
+
+export const validatePastSchedule = (scheduledTime: Date) => {
+ const currentTime = new Date();
+
+ if (new Date(scheduledTime) < currentTime) {
+  console.log("here 2");
+  throw new ValidationError("event cannot be in the past");
+ }
+};

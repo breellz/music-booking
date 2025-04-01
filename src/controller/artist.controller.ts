@@ -1,11 +1,12 @@
 import { Request, Response, NextFunction } from "express";
-import Artist from "../models/artist.model";
+import { Artist } from "../models/artist.model";
 import {
  sendErrorResponse,
  sendSuccessResponse,
 } from "../middleware/error/responseHandler";
 import logger from "../utils/helpers/logger";
 import { CustomRequest } from "../middleware/auth";
+import { validateArtistProfile } from "../utils/helpers/validators/validators";
 
 // Create Artist Profile
 export const createArtistProfile = async (
@@ -17,6 +18,7 @@ export const createArtistProfile = async (
  const userId = req.user?._id;
 
  try {
+  validateArtistProfile(stageName, bio, pricePerHour);
   // Check if artist profile already exists for the user
   const existingArtist = await Artist.findOne({ user: userId });
   if (existingArtist) {
@@ -74,6 +76,9 @@ export const updateArtistAvailability = async (
  const userId = req.user?._id;
 
  try {
+  if (typeof availability !== "boolean") {
+   return sendErrorResponse(res, "Availability must be a boolean", 400);
+  }
   // Update artist availability
   const updatedArtist = await Artist.findOneAndUpdate(
    { user: userId },

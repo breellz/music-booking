@@ -19,6 +19,6 @@ bookingRouter.get("/:id", Auth, getBooking);
 bookingRouter.get("/", Auth, getAllBookings);
 
 // Update Booking
-bookingRouter.patch("/:bookingId/:status", Auth, updateBooking);
+bookingRouter.patch("/:bookingId", Auth, updateBooking);
 
 export { bookingRouter };

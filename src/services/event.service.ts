@@ -26,7 +26,7 @@ export const getUserEvents = async (filters: IPageFilter, userId: string) => {
 
 export const handleEventCreation = async (data: any) => {
  try {
-  const event = await Event.create(...data);
+  const event = await Event.create({ ...data });
   return event;
  } catch (error) {
   throw error;

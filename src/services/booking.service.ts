@@ -12,14 +12,14 @@ export const getEventBookings = async (
   let matchStage: { [key: string]: any } = { user: userId };
 
   const totalCount = await Booking.countDocuments(matchStage);
-  const events = await Booking.find(matchStage)
+  const bookings = await Booking.find(matchStage)
    .sort({ createdAt: -1 })
    .skip((page - 1) * limit)
    .limit(limit);
 
   const meta = new PageMeta({ page, limit }, totalCount);
   return {
-   events,
+   bookings,
    meta,
   };
  } catch (error) {

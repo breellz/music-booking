@@ -34,4 +34,6 @@ const ArtistSchema: Schema = new Schema(
  { timestamps: true }
 );
 
-export const Artist = mongoose.model<IArtist>("Artist", ArtistSchema);
+const Artist = mongoose.model<IArtist>("Artist", ArtistSchema);
+
+export { Artist };
